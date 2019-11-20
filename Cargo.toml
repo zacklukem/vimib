@@ -1,0 +1,17 @@
+[workspace]
+members = [
+	"src/libparser",
+	"src/libcodegen",
+	"src/libvm"
+]
+
+[package]
+name = "vimib"
+version = "0.1.0"
+authors = ["Zachary Mayhew <mayhew.zachary2003@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+libparser = {path = "src/libparser"}
+libcodegen = {path = "src/libcodegen"}
+libvm = {path = "src/libvm"}
