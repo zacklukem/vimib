@@ -1,2 +1,2 @@
-pub mod vm;
 pub mod consts;
+pub mod vm;

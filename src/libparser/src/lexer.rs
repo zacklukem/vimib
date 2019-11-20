@@ -392,12 +392,13 @@ impl<'a> Lexer<'a> {
         }
     }
 
+    #[allow(clippy::should_implement_trait)]
     pub fn next(&mut self) -> Token {
-        self.tokens.next().unwrap_or(eof())
+        self.tokens.next().unwrap_or_else(eof)
     }
 
     pub fn peek(&self, n: usize) -> Token {
-        self.tokens.clone().nth(n).unwrap_or(eof())
+        self.tokens.clone().nth(n).unwrap_or_else(eof)
     }
 
     pub fn until(&mut self, kind: Vec<TokenKind>) -> Option<Token> {

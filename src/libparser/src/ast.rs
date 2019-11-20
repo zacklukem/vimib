@@ -31,7 +31,7 @@ pub enum Op {
     GtEq,
     Lt,
     Gt,
-    Not
+    Not,
 }
 
 impl From<TokenKind> for Op {

@@ -7,7 +7,7 @@ pub struct OpcodeGenerator<'a> {
     var_map: HashMap<String, u8>,
     var_index: u8,
     break_me: Vec<usize>,
-    out: Vec<u8>
+    out: Vec<u8>,
 }
 
 impl OpcodeGenerator<'_> {
@@ -17,7 +17,7 @@ impl OpcodeGenerator<'_> {
             var_map: HashMap::new(),
             var_index: 0,
             break_me: Vec::new(),
-            out: Vec::new()
+            out: Vec::new(),
         }
     }
     fn to_str(&self, span: &libparser::span::Span) -> String {
@@ -35,20 +35,20 @@ impl OpcodeGenerator<'_> {
                 Statement::Assign(name, expr) => {
                     self.gen_expr(expr);
                     let name = self.to_str(name);
-                    
+
                     self.out.push(STO_I);
                     if let Some(index) = self.var_map.get(&name) {
                         self.out.push(*index);
                     } else {
                         self.var_map.insert(name, self.var_index);
                         self.out.push(self.var_index);
-                        self.var_index += 4;// FIXME: Detect Type
+                        self.var_index += 4; // FIXME: Detect Type
                     }
                 }
                 Statement::Mutate(name, expr) => {
                     self.gen_expr(expr);
                     let name = self.to_str(name);
-                    
+
                     self.out.push(STO_I);
                     if let Some(index) = self.var_map.get(&name) {
                         self.out.push(*index);
@@ -61,7 +61,7 @@ impl OpcodeGenerator<'_> {
                     self.out.push(IF_F);
                     let set_me = self.out.len();
                     self.out.push(0);
-                    
+
                     self.gen_block(block);
                     *self.out.get_mut(set_me).unwrap() = self.out.len() as u8;
                 }
@@ -79,7 +79,7 @@ impl OpcodeGenerator<'_> {
                 Statement::Break => {
                     self.out.push(GOTO);
                     self.out.push(0);
-                    self.break_me.push(self.out.len()-1);
+                    self.break_me.push(self.out.len() - 1);
                 }
                 _ => unimplemented!(),
             }
@@ -87,7 +87,6 @@ impl OpcodeGenerator<'_> {
     }
 
     pub fn gen_expr(&mut self, expr: &Expression) {
-
         match expr {
             Expression::Binary(lhs, op, rhs) => {
                 self.gen_expr(lhs);
@@ -104,7 +103,7 @@ impl OpcodeGenerator<'_> {
                     Op::Gt => GT,
                     Op::LtEq => LE,
                     Op::GtEq => GE,
-                    _ => unimplemented!()
+                    _ => unimplemented!(),
                 });
             }
             Expression::FunctionCall(ident, exprs) => {
@@ -114,10 +113,10 @@ impl OpcodeGenerator<'_> {
                     self.out.push(0);
                 }
             }
-            Expression::Ident {val} => {
+            Expression::Ident { val } => {
                 let ident = self.to_str(val);
                 self.out.push(LOAD_I);
-                if let Some(index) = self.var_map.get(&String::from(ident)) {
+                if let Some(index) = self.var_map.get(&ident) {
                     self.out.push(*index);
                 }
             }

@@ -38,72 +38,72 @@ pub const VIRTUAL: u8 = 0xfe;
 pub const RET: u8 = 0xff;
 
 pub fn disassemble_each(val: u8) -> Option<&'static str> {
-	match val {
-		PUSH_I => Some("push_i"),
-		ADD_I => Some("add_i"),
-		SUB_I => Some("sub_i"),
-		MUL_I => Some("mul_i"),
-		DIV_I => Some("div_i"),
-		MOD_I => Some("mod_i"),
-		CMP_I => Some("cmp_i"),
-		NE => Some("ne"),
-		EQ => Some("eq"),
-		LT => Some("lt"),
-		GT => Some("gt"),
-		LE => Some("le"),
-		GE => Some("ge"),
-		IF_T => Some("if_t"),
-		IF_F => Some("if_f"),
-		IF_NE => Some("if_ne"),
-		IF_EQ => Some("if_eq"),
-		IF_GT => Some("if_gt"),
-		IF_LT => Some("if_lt"),
-		IF_LE => Some("if_le"),
-		IF_GE => Some("if_ge"),
-		DUP_I => Some("dup_i"),
-		GOTO => Some("goto"),
-		LOAD_I => Some("load_i"),
-		STO_I => Some("sto_i"),
-		VIRTUAL => Some("virtual"),
-		RET => Some("ret"),
-		_ => Some("unknown")
-	}
+    match val {
+        PUSH_I => Some("push_i"),
+        ADD_I => Some("add_i"),
+        SUB_I => Some("sub_i"),
+        MUL_I => Some("mul_i"),
+        DIV_I => Some("div_i"),
+        MOD_I => Some("mod_i"),
+        CMP_I => Some("cmp_i"),
+        NE => Some("ne"),
+        EQ => Some("eq"),
+        LT => Some("lt"),
+        GT => Some("gt"),
+        LE => Some("le"),
+        GE => Some("ge"),
+        IF_T => Some("if_t"),
+        IF_F => Some("if_f"),
+        IF_NE => Some("if_ne"),
+        IF_EQ => Some("if_eq"),
+        IF_GT => Some("if_gt"),
+        IF_LT => Some("if_lt"),
+        IF_LE => Some("if_le"),
+        IF_GE => Some("if_ge"),
+        DUP_I => Some("dup_i"),
+        GOTO => Some("goto"),
+        LOAD_I => Some("load_i"),
+        STO_I => Some("sto_i"),
+        VIRTUAL => Some("virtual"),
+        RET => Some("ret"),
+        _ => Some("unknown"),
+    }
 }
 
 pub fn disassemble(program: &[u8]) -> String {
-	let mut out = String::new();
-	let mut program = program.iter().enumerate();
-	macro_rules! push_n {
-		($n: expr) => {
-			for _ in 0..$n {
-				out.push(' ');
-				out.push_str(&program.next().unwrap().1.to_string());
-			}
-		};
-	}
-	while let Some((i, v)) = program.next() {
-		let i_str = i.to_string();
-		out.push_str("\u{001b}[33m"); // red
-		out.push_str(&i_str);
-		out.push_str(": ");
-		out.push_str("\u{001b}[0m"); // reset
-		for _ in 0..(3-i_str.len()) {
-			out.push(' ');
-		}
-		out.push_str("\u{001b}[31m"); // blue
-		let in_str = disassemble_each(*v).unwrap();
-		out.push_str(in_str);
-		for _ in 0..(8-in_str.len()) {
-			out.push(' ');
-		}
-		out.push_str("\u{001b}[0m"); // reset
-		match *v {
-			PUSH_I => push_n!(4),
-			VIRTUAL | GOTO | STO_I | LOAD_I | IF_T..=IF_GE => push_n!(1),
-			
-			_ => {}
-		}
-		out.push('\n');
-	}
-	out
+    let mut out = String::new();
+    let mut program = program.iter().enumerate();
+    macro_rules! push_n {
+        ($n: expr) => {
+            for _ in 0..$n {
+                out.push(' ');
+                out.push_str(&program.next().unwrap().1.to_string());
+            }
+        };
+    }
+    while let Some((i, v)) = program.next() {
+        let i_str = i.to_string();
+        out.push_str("\u{001b}[33m"); // red
+        out.push_str(&i_str);
+        out.push_str(": ");
+        out.push_str("\u{001b}[0m"); // reset
+        for _ in 0..(3 - i_str.len()) {
+            out.push(' ');
+        }
+        out.push_str("\u{001b}[31m"); // blue
+        let in_str = disassemble_each(*v).unwrap();
+        out.push_str(in_str);
+        for _ in 0..(8 - in_str.len()) {
+            out.push(' ');
+        }
+        out.push_str("\u{001b}[0m"); // reset
+        match *v {
+            PUSH_I => push_n!(4),
+            VIRTUAL | GOTO | STO_I | LOAD_I | IF_T..=IF_GE => push_n!(1),
+
+            _ => {}
+        }
+        out.push('\n');
+    }
+    out
 }

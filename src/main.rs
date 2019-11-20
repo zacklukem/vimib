@@ -1,7 +1,7 @@
-use libparser::*;
 use libcodegen::*;
-use libvm::*;
+use libparser::*;
 use libvm::consts::*;
+use libvm::*;
 
 fn main() {
     static INPUT: &str = r"

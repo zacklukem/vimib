@@ -41,7 +41,9 @@ impl Parser<'_> {
                 let expr = self.parse_expression();
                 Some(Statement::Mutate(var.span, expr))
             }
-            TokenKind::Identifier | TokenKind::Literal(_) => Some(Statement::Expression(self.parse_expression())),
+            TokenKind::Identifier | TokenKind::Literal(_) => {
+                Some(Statement::Expression(self.parse_expression()))
+            }
             _ => None,
         }
     }
