@@ -1,5 +1,6 @@
 # ViMIB 
 ###### *VIrtual Machine Inspired by Boredom*
+![ci]
 
 Simple language compiled into bytecode.
 
@@ -14,6 +15,7 @@ In other words, **just for fun**
 Currently this language only has the types
  * `i32`
  * `bool`
+
 and a register pool limited to 256 bytes b/c references are only one byte long.
 
 Jumps accept a byte as their input so programs can at max jump to index 255.
@@ -22,22 +24,24 @@ In the bytecode all numbers are stored in big-endian format.
 
 Example bytecode (each byte separated by space):
 ```assembly
-0:   push_i   0 0 0 0        ; push 0 to stack
-5:   sto_i    0              ; store at 0
-7:   load_i   0              ; load from 0
-9:   virtual  0              ; print integer at top of stack
-11:  load_i   0              ; load from 0
-13:  push_i   0 0 0 10       ; push 10 to stack
-18:  ge                      ; >= op (returns bool (u8))
-19:  if_f     30             ; if false jump to 30
-21:  push_i   73 143 58 148  ; push 1234123412 to the stack
-26:  virtual  0
-28:  goto     43
-30:  load_i   0
-32:  push_i   0 0 0 1
-37:  add_i                   ; add top two integers
-38:  sto_i    0
-40:  goto     7
+0:   push_i   0 0 0 0   ; push 0 onto the stack
+5:   sto_i    0         ; store in register #0
+7:   load_i   0         ; load register #0
+9:   virtual  0         ; print int from stack
+11:  load_i   0
+13:  push_i   0 0 0 10
+18:  ge                 ; >= operator
+19:  if_f     31        ; if false goto 31
+21:  ldc      0         ; load constant #0
+23:  virtual  2         ; print string
+25:  ldc      7
+27:  virtual  2
+29:  goto     44
+31:  load_i   0
+33:  push_i   0 0 0 1
+38:  add_i              ; add top two integers
+39:  sto_i    0
+41:  goto     7
 ```
 
 ## Language
@@ -47,9 +51,10 @@ That bytecode is generated from the following:
 let i = 0
 
 loop {
-    println(i)
+    print_int(i)
     if i >= 10 {
-        println(1234123412)
+        print_str("Hello,")
+        print_str("World!")
         break
     }
     i = i + 1
@@ -58,7 +63,7 @@ loop {
 The parser can parse function declarations as well, but there is no bytecode generated yet for functions.  Nested loops also don't generate properly.
 
 ## ToDo
- - [ ] strings
+ - [x] strings
  - [ ] floats
  - [ ] 64 bit numbers
  - [ ] better loops
@@ -66,3 +71,5 @@ The parser can parse function declarations as well, but there is no bytecode gen
  - [ ] classes
  - [ ] scope
  - [ ] static type checks
+
+[ci]: https://github.com/zacklukem/vimib/workflows/Continuous%20Integration/badge.svg

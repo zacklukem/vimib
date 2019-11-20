@@ -8,6 +8,7 @@ pub struct OpcodeGenerator<'a> {
     var_index: u8,
     break_me: Vec<usize>,
     out: Vec<u8>,
+    consts: Vec<u8>,
 }
 
 impl OpcodeGenerator<'_> {
@@ -18,14 +19,24 @@ impl OpcodeGenerator<'_> {
             var_index: 0,
             break_me: Vec::new(),
             out: Vec::new(),
+            consts: Vec::new(),
         }
     }
+
+    fn new_const(&mut self, val: &str) -> usize {
+        let index = self.consts.len();
+        let len = val.len();
+        self.consts.push(len as u8);
+        self.consts.extend(val.as_bytes().iter());
+        index
+    }
+
     fn to_str(&self, span: &libparser::span::Span) -> String {
         String::from(&self.input[span.pos.0..span.pos.1])
     }
 
-    pub fn gen(&self) -> &[u8] {
-        self.out.as_slice()
+    pub fn gen(&self) -> (&[u8], &[u8]) {
+        (self.out.as_slice(), self.consts.as_slice())
     }
 
     pub fn gen_block(&mut self, block: &Block) {
@@ -106,13 +117,19 @@ impl OpcodeGenerator<'_> {
                     _ => unimplemented!(),
                 });
             }
-            Expression::FunctionCall(ident, exprs) => {
-                if self.to_str(ident).as_str() == "println" {
+            Expression::FunctionCall(ident, exprs) => match self.to_str(ident).as_str() {
+                "print_int" => {
                     self.gen_expr(exprs.get(0).unwrap());
                     self.out.push(VIRTUAL);
                     self.out.push(0);
                 }
-            }
+                "print_str" => {
+                    self.gen_expr(exprs.get(0).unwrap());
+                    self.out.push(VIRTUAL);
+                    self.out.push(2);
+                }
+                _ => unimplemented!(),
+            },
             Expression::Ident { val } => {
                 let ident = self.to_str(val);
                 self.out.push(LOAD_I);
@@ -120,19 +137,30 @@ impl OpcodeGenerator<'_> {
                     self.out.push(*index);
                 }
             }
-            Expression::Literal { val, .. } => {
-                self.out.push(PUSH_I);
-                let num = self.to_str(val);
-                let num = num.parse::<i32>().unwrap(); // TODO: Match literal kind
-                let x = num as u32;
-                let b1: u8 = ((x >> 24) & 0xff) as u8;
-                let b2: u8 = ((x >> 16) & 0xff) as u8;
-                let b3: u8 = ((x >> 8) & 0xff) as u8;
-                let b4: u8 = (x & 0xff) as u8;
-                self.out.push(b1);
-                self.out.push(b2);
-                self.out.push(b3);
-                self.out.push(b4);
+            Expression::Literal { val, kind } => {
+                match *kind {
+                    LiteralKind::Int => {
+                        self.out.push(PUSH_I);
+                        let num = self.to_str(val);
+                        let num = num.parse::<i32>().unwrap(); // TODO: Match literal kind
+                        let x = num as u32;
+                        let b1: u8 = ((x >> 24) & 0xff) as u8;
+                        let b2: u8 = ((x >> 16) & 0xff) as u8;
+                        let b3: u8 = ((x >> 8) & 0xff) as u8;
+                        let b4: u8 = (x & 0xff) as u8;
+                        self.out.push(b1);
+                        self.out.push(b2);
+                        self.out.push(b3);
+                        self.out.push(b4);
+                    }
+                    LiteralKind::String => {
+                        let val = self.to_str(val);
+                        let c_index = self.new_const(&val[1..val.len() - 1]);
+                        self.out.push(LDC);
+                        self.out.push(c_index as u8);
+                    }
+                    LiteralKind::Float => unimplemented!(),
+                }
             }
             _ => unimplemented!(),
         }

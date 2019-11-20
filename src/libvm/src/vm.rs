@@ -6,15 +6,17 @@ pub struct Vm<'a> {
     index: usize,
     regs: [u8; 0xff],
     stack: Vec<u8>,
+    constants: &'a [u8],
 }
 
 impl Vm<'_> {
-    pub fn new(program: &[u8]) -> Vm {
+    pub fn new<'a>(program: &'a [u8], constants: &'a [u8]) -> Vm<'a> {
         Vm {
             program,
             index: 0,
             regs: [0; 0xff],
             stack: Vec::new(),
+            constants,
         }
     }
 
@@ -87,17 +89,6 @@ impl Vm<'_> {
         }
         out.reverse();
         out
-    }
-
-    /// Get an int in the form of an i32 from the stack
-    fn get_int_i(&self) -> i32 {
-        let mut array = self.get_int();
-        array.reverse();
-        let mut combined: u32 = 0;
-        for v in array.iter() {
-            combined = (combined << 8) | u32::from(*v);
-        }
-        combined as i32
     }
 
     /// Run the program
@@ -176,10 +167,28 @@ impl Vm<'_> {
                 VIRTUAL => {
                     let call = self.next();
                     match call {
-                        0x00 => println!("{}", self.get_int_i()),
+                        0x00 => println!("{}", self.pop_int_i()),
                         0x01 => println!("STACK: {:?}", self.stack),
+                        0x02 => {
+                            let len = self.pop();
+                            let mut val = Vec::with_capacity(len as usize);
+                            for _ in 0..len {
+                                val.push(self.pop());
+                            }
+                            println!("{}", std::str::from_utf8(val.as_slice()).unwrap());
+                        }
                         _ => {}
                     }
+                }
+                LDC => {
+                    let index = self.next() as usize;
+                    let len = self.constants[index];
+                    let mut constant = Vec::with_capacity(len as usize + 1);
+                    for i in 0..=len {
+                        constant.push(self.constants[index + i as usize])
+                    }
+                    constant.reverse();
+                    self.stack.extend(constant.iter());
                 }
                 RET => return self.stack.as_slice(),
                 CMP_I => {
