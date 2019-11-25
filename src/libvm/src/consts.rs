@@ -29,11 +29,13 @@ pub const DUP_I: u8 = 0xdf;
 
 pub const GOTO: u8 = 0xc0;
 
-pub const LDC: u8 = 0xfb;
+pub const LDC: u8 = 0xfa;
 
-pub const LOAD_I: u8 = 0xfc;
+pub const LOAD_I: u8 = 0xfb;
 
-pub const STO_I: u8 = 0xfd;
+pub const STO_I: u8 = 0xfc;
+
+pub const CALL: u8 = 0xfd;
 
 pub const VIRTUAL: u8 = 0xfe;
 
@@ -65,6 +67,7 @@ pub fn disassemble_each(val: u8) -> Option<&'static str> {
         DUP_I => Some("dup_i"),
         GOTO => Some("goto"),
         LDC => Some("ldc"),
+        CALL => Some("call"),
         LOAD_I => Some("load_i"),
         STO_I => Some("sto_i"),
         VIRTUAL => Some("virtual"),
@@ -102,7 +105,7 @@ pub fn disassemble(program: &[u8]) -> String {
         out.push_str("\u{001b}[0m"); // reset
         match *v {
             PUSH_I => push_n!(4),
-            VIRTUAL | GOTO | STO_I | LOAD_I | LDC | IF_T..=IF_GE => push_n!(1),
+            VIRTUAL | GOTO | STO_I | LOAD_I | LDC | CALL | IF_T..=IF_GE => push_n!(1),
 
             _ => {}
         }

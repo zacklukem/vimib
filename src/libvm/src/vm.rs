@@ -1,22 +1,25 @@
 use crate::consts::*;
+use crate::module::Module;
+use std::cell::RefCell;
 use std::cmp::Ordering;
+use std::rc::Rc;
 
 pub struct Vm<'a> {
     program: &'a [u8],
     index: usize,
     regs: [u8; 0xff],
     stack: Vec<u8>,
-    constants: &'a [u8],
+    module: Rc<RefCell<Module>>,
 }
 
 impl Vm<'_> {
-    pub fn new<'a>(program: &'a [u8], constants: &'a [u8]) -> Vm<'a> {
+    pub fn new(program: &[u8], module: Rc<RefCell<Module>>) -> Vm {
         Vm {
             program,
             index: 0,
             regs: [0; 0xff],
             stack: Vec::new(),
-            constants,
+            module,
         }
     }
 
@@ -92,7 +95,7 @@ impl Vm<'_> {
     }
 
     /// Run the program
-    pub fn run(&mut self) -> &[u8] {
+    pub fn run(&mut self) -> Vec<u8> {
         macro_rules! ordering {
             ($a: expr) => {{
                 let location = self.next();
@@ -164,6 +167,10 @@ impl Vm<'_> {
                         self.push(self.regs[reg + i]);
                     }
                 }
+                CALL => {
+                    let index = self.next() as usize;
+                    self.module.borrow().call(index);
+                }
                 VIRTUAL => {
                     let call = self.next();
                     match call {
@@ -182,15 +189,15 @@ impl Vm<'_> {
                 }
                 LDC => {
                     let index = self.next() as usize;
-                    let len = self.constants[index];
+                    let len = self.module.borrow().constants()[index];
                     let mut constant = Vec::with_capacity(len as usize + 1);
                     for i in 0..=len {
-                        constant.push(self.constants[index + i as usize])
+                        constant.push(self.module.borrow().constants()[index + i as usize])
                     }
                     constant.reverse();
                     self.stack.extend(constant.iter());
                 }
-                RET => return self.stack.as_slice(),
+                RET => return self.stack.clone(), // TODO: fix return values
                 CMP_I => {
                     let a = self.pop_int_i();
                     let b = self.pop_int_i();
@@ -211,6 +218,6 @@ impl Vm<'_> {
                 _ => panic!("Unknown opcode: {}", self.current()),
             }
         }
-        &[]
+        vec![]
     }
 }
