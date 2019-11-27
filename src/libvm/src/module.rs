@@ -1,7 +1,7 @@
 use crate::consts;
 use crate::function::Function;
-use std::collections::HashMap;
 use crate::vm_type::Type;
+use std::collections::HashMap;
 
 #[derive(Default)]
 pub struct Module {
@@ -19,15 +19,19 @@ impl Module {
     }
 
     pub fn get_main(&self) -> &Function {
-        self.functions.iter().find(|(i, _)| {
-            let mut buffer = String::new();
-            let mut iter = self.constants.iter();
-            let len = iter.nth(**i).unwrap();
-            for _ in 0..*len {
-                buffer.push(*iter.next().unwrap() as char);
-            }
-            buffer == String::from("main")
-        }).unwrap().1
+        self.functions
+            .iter()
+            .find(|(i, _)| {
+                let mut buffer = String::new();
+                let mut iter = self.constants.iter();
+                let len = iter.nth(**i).unwrap();
+                for _ in 0..*len {
+                    buffer.push(*iter.next().unwrap() as char);
+                }
+                buffer == "main"
+            })
+            .unwrap()
+            .1
     }
 
     pub fn disassemble(&self) {
@@ -69,18 +73,15 @@ impl Module {
     }
 
     pub fn get_fn(&self, function: usize) -> &Function {
-        self.functions
-            .get(&function)
-            .unwrap()
+        self.functions.get(&function).unwrap()
     }
 
     pub fn call(&self, function: usize, stack: &mut Vec<u8>) -> Vec<u8> {
-
         let func = self.get_fn(function);
         let mut params = Vec::new();
         for param in func.params().iter() {
             let len = match *param {
-                Type::I32 => 4
+                Type::I32 => 4,
             };
             for _ in 0..len {
                 // params.push(0);

@@ -1,6 +1,6 @@
 use libvm::module::Module;
-use std::rc::Rc;
 use std::cell::RefCell;
+use std::rc::Rc;
 
 pub struct ObjBuilder {
     module: Rc<RefCell<Module>>,

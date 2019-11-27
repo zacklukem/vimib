@@ -1,6 +1,6 @@
 #[derive(Debug)]
 pub enum Type {
-    I32
+    I32,
 }
 
 impl Type {

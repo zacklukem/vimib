@@ -41,19 +41,24 @@ impl OpcodeGenerator<'_> {
     pub fn gen_module(&mut self, block: &Block) {
         for stmt in block.body.iter() {
             match stmt {
-                Statement::FnDecl { name, block, args, .. } => {
+                Statement::FnDecl {
+                    name, block, args, ..
+                } => {
                     let name = self.to_str(name);
                     if let Some(_func) = self.functions.get(&name) {
                         panic!("Function already exists")
                     } else {
-                        let args: Vec<vm_type::Type> = args.iter().map(|v| match *v {
-                            Ident::Untyped(span) => {
-                                self.var_map.insert(self.to_str(&span), self.var_index);
-                                self.var_index += 4;
-                                vm_type::Type::I32
-                            },
-                            _ => unimplemented!()
-                        }).collect();
+                        let args: Vec<vm_type::Type> = args
+                            .iter()
+                            .map(|v| match *v {
+                                Ident::Untyped(span) => {
+                                    self.var_map.insert(self.to_str(&span), self.var_index);
+                                    self.var_index += 4;
+                                    vm_type::Type::I32
+                                }
+                                _ => unimplemented!(),
+                            })
+                            .collect();
                         self.gen_block(block);
                         let instructions = self.out.clone();
                         self.reset();
