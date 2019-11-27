@@ -2,6 +2,7 @@ use libparser::ast::*;
 use libvm::consts::*;
 use libvm::function::Function;
 use libvm::module::Module;
+use libvm::vm_type;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
@@ -40,15 +41,23 @@ impl OpcodeGenerator<'_> {
     pub fn gen_module(&mut self, block: &Block) {
         for stmt in block.body.iter() {
             match stmt {
-                Statement::FnDecl { name, block, .. } => {
+                Statement::FnDecl { name, block, args, .. } => {
                     let name = self.to_str(name);
                     if let Some(_func) = self.functions.get(&name) {
                         panic!("Function already exists")
                     } else {
+                        let args: Vec<vm_type::Type> = args.iter().map(|v| match *v {
+                            Ident::Untyped(span) => {
+                                self.var_map.insert(self.to_str(&span), self.var_index);
+                                self.var_index += 4;
+                                vm_type::Type::I32
+                            },
+                            _ => unimplemented!()
+                        }).collect();
                         self.gen_block(block);
                         let instructions = self.out.clone();
                         self.reset();
-                        let func = Function::new(instructions, Rc::clone(&self.module));
+                        let func = Function::new(instructions, args, Rc::clone(&self.module));
                         let index = self.module.borrow_mut().push_fn(name.clone(), func);
                         self.functions.insert(name, index);
                     }
@@ -107,7 +116,7 @@ impl OpcodeGenerator<'_> {
                     self.gen_block(block);
                     self.out.push(GOTO);
                     self.out.push(start as u8);
-                    let end = self.out.len() + 1;
+                    let end = self.out.len();
                     for i in self.break_me.iter() {
                         *self.out.get_mut(*i).unwrap() = end as u8;
                     }
@@ -155,6 +164,9 @@ impl OpcodeGenerator<'_> {
                     self.out.push(2);
                 }
                 ident => {
+                    for expr in exprs.iter() {
+                        self.gen_expr(expr);
+                    }
                     if let Some(index) = self.functions.get(ident) {
                         self.out.push(CALL);
                         self.out.push(*index as u8);

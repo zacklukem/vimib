@@ -7,17 +7,17 @@ use std::rc::Rc;
 pub struct Vm<'a> {
     program: &'a [u8],
     index: usize,
-    regs: [u8; 0xff],
+    regs: Vec<u8>,
     stack: Vec<u8>,
     module: Rc<RefCell<Module>>,
 }
 
 impl Vm<'_> {
-    pub fn new(program: &[u8], module: Rc<RefCell<Module>>) -> Vm {
+    pub fn new(program: &[u8], regs: Vec<u8>, module: Rc<RefCell<Module>>) -> Vm {
         Vm {
             program,
             index: 0,
-            regs: [0; 0xff],
+            regs,
             stack: Vec::new(),
             module,
         }
@@ -157,8 +157,14 @@ impl Vm<'_> {
                 STO_I => {
                     let reg = self.next() as usize;
                     let val = self.pop_int();
-                    for (i, v) in val.iter().enumerate() {
-                        self.regs[reg + i] = *v;
+                    if self.regs.len() <= reg + 3 {
+                        for v in val.iter() {
+                            self.regs.push(*v);
+                        }
+                    } else {
+                        for (i, v) in val.iter().enumerate() {
+                            *self.regs.get_mut(i).unwrap() = *v;
+                        }
                     }
                 }
                 LOAD_I => {
@@ -169,7 +175,7 @@ impl Vm<'_> {
                 }
                 CALL => {
                     let index = self.next() as usize;
-                    self.module.borrow().call(index);
+                    self.module.borrow().call(index, &mut self.stack);
                 }
                 VIRTUAL => {
                     let call = self.next();
