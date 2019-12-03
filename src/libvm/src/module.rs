@@ -3,13 +3,22 @@ use crate::function::Function;
 use crate::vm_type::Type;
 use std::collections::HashMap;
 
-#[derive(Default)]
+#[derive(Default, PartialEq, Debug)]
 pub struct Module {
     constants: Vec<u8>,
     functions: HashMap<usize, Function>,
 }
 
 impl Module {
+    /// Creates a new string constant and returns it's index
+    /// ```
+    /// # use libvm::module::*;
+    ///
+    /// let mut module: Module = Default::default();
+    /// let index = module.new_const("Hello, World!");
+    /// assert_eq!(module.constants()[index], 13);
+    /// assert_eq!(module.constants()[index + 1], 'H' as u8);
+    /// ```
     pub fn new_const(&mut self, val: &str) -> usize {
         let index = self.constants.len();
         let len = val.len();
@@ -18,6 +27,17 @@ impl Module {
         index
     }
 
+    /// Return the main function and panics if it doesn't exist
+    /// ```
+    /// # use libvm::module::*;
+    /// # use libvm::function::Function;
+    /// 
+    /// let mut module: Module = Default::default();
+    /// let func: Function = Default::default();
+    /// module.push_fn("main".to_string(), func.clone());
+    /// let main = module.get_main();
+    /// assert_eq!(*main, func);
+    /// ```
     pub fn get_main(&self) -> &Function {
         self.functions
             .iter()
@@ -34,6 +54,12 @@ impl Module {
             .1
     }
 
+    /// Disassembles the module and prints it out
+    /// ```
+    /// # use libvm::module::Module;
+    /// let module: Module = Default::default();
+    /// module.disassemble();
+    /// ```
     pub fn disassemble(&self) {
         println!("constants:");
         let mut buffer = String::new();
@@ -61,21 +87,65 @@ impl Module {
             );
         }
     }
-
+    
+    /// Runs the main function and panics if it doesn't exist
+    /// ```
+    /// # use libvm::module::*;
+    /// # use libvm::function::Function;
+    /// 
+    /// let mut module: Module = Default::default();
+    /// let func: Function = Default::default();
+    /// module.push_fn("main".to_string(), func.clone());
+    /// module.run_main();
+    /// ``` 
     pub fn run_main(&self) {
         self.get_main().run(Vec::new());
     }
 
-    pub fn push_fn(&mut self, name: String, function: Function) -> usize {
-        let i = self.new_const(name.as_str());
-        self.functions.insert(i, function);
-        i
+    /// Pushes a function to the module
+    /// 
+    /// ```
+    /// # use libvm::module::*;
+    /// # use libvm::function::Function;
+    /// 
+    /// let mut module: Module = Default::default();
+    /// let func: Function = Default::default();
+    /// let index = module.new_const("main";
+    /// module.push_fn(index, func.clone());
+    /// let other = module.get_fn(index);
+    /// assert_eq!(*other, func);
+    /// ```
+    pub fn push_fn(&mut self, index: usize, function: Function) {
+        self.functions.insert(index, function);
     }
 
+    /// Gets a function by it's id and returns a reference to it
+    /// ```
+    /// # use libvm::module::*;
+    /// # use libvm::function::Function;
+    /// 
+    /// let mut module: Module = Default::default();
+    /// let func: Function = Default::default();
+    /// let index = module.push_fn("main".to_string(), func.clone());
+    /// let other = module.get_fn(index);
+    /// assert_eq!(*other, func);
+    /// ```
     pub fn get_fn(&self, function: usize) -> &Function {
         self.functions.get(&function).unwrap()
     }
 
+    /// Calls a function with a stack as parameters and return's its return
+    /// results
+    /// ```
+    /// # use libvm::module::*;
+    /// # use libvm::function::Function;
+    /// 
+    /// let mut module: Module = Default::default();
+    /// let func: Function = Default::default();
+    /// let index = module.push_fn("main".to_string(), func.clone());
+    /// let mut stack = vec![];
+    /// module.call(index, &mut stack);
+    /// ```
     pub fn call(&self, function: usize, stack: &mut Vec<u8>) -> Vec<u8> {
         let func = self.get_fn(function);
         let mut params = Vec::new();
@@ -92,9 +162,12 @@ impl Module {
         func.run(params)
     }
 
+    /// Returns this module's constants
     pub fn constants(&self) -> &[u8] {
         self.constants.as_slice()
     }
+
+    // Return this module's functions
     pub fn functions(&self) -> &HashMap<usize, Function> {
         &self.functions
     }

@@ -1,0 +1,30 @@
+fn say_hi(a, b) {
+    print_int(a)
+    print_int(b)
+    print_str("Hello,")
+    print_str("World!")
+}
+
+fn add(a, b) {
+    return a + b
+}
+
+fn fib(num) {
+    if num < 2 {
+        return num
+    }
+    return add(fib(num - 1), fib(num - 2))
+}
+
+fn main() {
+    let i = 1
+    loop {
+        print_int(fib(i))
+        if i >= 10 {
+            say_hi(add(10, 6), 29)
+            break
+        }
+        i = i + 1
+    }
+    say_hi(5, 3)
+}

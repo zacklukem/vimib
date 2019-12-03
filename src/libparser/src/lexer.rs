@@ -25,6 +25,7 @@ pub enum TokenKind {
     Else,
     Break,
     Loop,
+    Return,
 
     /// Delimiter
     OpenParen,
@@ -74,6 +75,7 @@ fn keyword(text: &str) -> Option<TokenKind> {
         "else" => Some(TokenKind::Else),
         "break" => Some(TokenKind::Break),
         "loop" => Some(TokenKind::Loop),
+        "return" => Some(TokenKind::Return),
         _ => None,
     }
 }

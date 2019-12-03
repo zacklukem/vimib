@@ -19,6 +19,11 @@ impl Parser<'_> {
                     Some(Statement::Dummy)
                 }
             }
+            TokenKind::Return => {
+                self.lexer.next(); // return keyword
+                let expr = self.parse_expression();
+                Some(Statement::Return(expr))
+            }
             TokenKind::Fn => self.parse_function_decl(),
             TokenKind::If => self.parse_if_statement(),
             TokenKind::Loop => {

@@ -67,9 +67,62 @@ The parser can parse function declarations as well, but there is no bytecode gen
  - [ ] floats
  - [ ] 64 bit numbers
  - [ ] better loops
- - [ ] functions
+ - [x] functions
  - [ ] classes
  - [ ] scope
  - [ ] static type checks
 
 [ci]: https://github.com/zacklukem/vimib/workflows/Continuous%20Integration/badge.svg
+
+## Specification
+### Numbers Strings Identifiers
+```ebnf
+digit   = "0" | ... | "9" ;
+letter  = "a" | ... | "z" | "A" | ... | "Z" ;
+number  = digit, { digit }, [ ".", digit, { digit } ] ;
+string  = '"', UTF_8_CHAR_NOT_QUOTE, '"' ;
+ident   = ( letter | "_" ), { letter | number | "_" } ;
+```
+
+### Expressions
+```ebnf
+expr    = literal
+        | binary
+        | unary
+        | group
+        | call ;
+
+literal = number | string ;
+call    = ident, "(", [ expr, { ",", expr } ], ")" ;
+binary  = expr, binop, expr ;
+unary   = ("!" | "-"), expr ;
+group   = "(", expr, ")" ;
+binop   = "+" | "-" | "*" | "/" | "%" | "==" 
+        | "!=" | "<" | ">" | "<=" | ">="
+        | "&&" | "||" | "&" | "|" ;
+```
+
+### Statements
+```ebnf
+stmt    = expr
+        | if stmt
+        | "loop", block
+        | "return", [ expr ]
+        | "break"
+        | "let", ident, "=", expr
+        | ident, "=", expr ;
+block   = "{", { stmt }, "}" ;
+if stmt = "if", expr, block,
+          { "else if", expr, block },
+          [ "else", block ] ;
+```
+
+### Functions
+```ebnf
+fn_decl = "fn", ident, "(" [ ident, { ",", ident } ] ")", block ;
+```
+
+### Program
+```ebnf
+program = [ fn_decl ] ;
+```

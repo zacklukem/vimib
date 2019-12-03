@@ -1,4 +1,5 @@
-pub const PUSH_I: u8 = 0x00;
+pub const NOP: u8 = 0x00;
+pub const PUSH_I: u8 = 0x01;
 
 pub const ADD_I: u8 = 0x0c;
 pub const SUB_I: u8 = 0x0d;
@@ -39,10 +40,16 @@ pub const CALL: u8 = 0xfd;
 
 pub const VIRTUAL: u8 = 0xfe;
 
-pub const RET: u8 = 0xff;
+pub const RET_I: u8 = 0xff;
 
+/// Convert each opcode into it's string variant and return none if unknown
+/// ```
+/// # use libvm::consts::*;
+/// assert_eq!(disassemble_each(IF_NE), Some("if_ne"));
+/// assert_eq!(disassemble_each(0x02), None);
 pub fn disassemble_each(val: u8) -> Option<&'static str> {
     match val {
+        NOP => Some("nop"),
         PUSH_I => Some("push_i"),
         ADD_I => Some("add_i"),
         SUB_I => Some("sub_i"),
@@ -71,11 +78,12 @@ pub fn disassemble_each(val: u8) -> Option<&'static str> {
         LOAD_I => Some("load_i"),
         STO_I => Some("sto_i"),
         VIRTUAL => Some("virtual"),
-        RET => Some("ret"),
-        _ => Some("unknown"),
+        RET_I => Some("ret_i"),
+        _ => None,
     }
 }
 
+/// Disassemble a program of bytecode
 pub fn disassemble(program: &[u8]) -> String {
     let mut out = String::new();
     let mut program = program.iter().enumerate();

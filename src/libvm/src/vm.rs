@@ -13,6 +13,12 @@ pub struct Vm<'a> {
 }
 
 impl Vm<'_> {
+    /// Create a new vm
+    /// ```
+    /// # use libvm::vm::Vm;
+    /// 
+    /// let vm = Vm::new(&[], Vec::new(), Default::default());
+    /// ```
     pub fn new(program: &[u8], regs: Vec<u8>, module: Rc<RefCell<Module>>) -> Vm {
         Vm {
             program,
@@ -95,6 +101,20 @@ impl Vm<'_> {
     }
 
     /// Run the program
+    /// ```
+    /// # use libvm::vm::Vm;
+    /// # use libvm::consts::*;
+    /// 
+    /// let program = &[
+    ///     PUSH_I, 0, 0, 0, 5,
+    ///     PUSH_I, 0, 0, 0, 6,
+    ///     ADD_I,
+    ///     RET_I
+    /// ];
+    /// let mut vm = Vm::new(program, Vec::new(), Default::default());
+    /// let out = vm.run();
+    /// assert_eq!(out, vec![11, 0, 0, 0]);
+    /// ```
     pub fn run(&mut self) -> Vec<u8> {
         macro_rules! ordering {
             ($a: expr) => {{
@@ -175,7 +195,8 @@ impl Vm<'_> {
                 }
                 CALL => {
                     let index = self.next() as usize;
-                    self.module.borrow().call(index, &mut self.stack);
+                    let ret = self.module.borrow().call(index, &mut self.stack);
+                    self.stack.extend(ret.iter());
                 }
                 VIRTUAL => {
                     let call = self.next();
@@ -203,7 +224,7 @@ impl Vm<'_> {
                     constant.reverse();
                     self.stack.extend(constant.iter());
                 }
-                RET => return self.stack.clone(), // TODO: fix return values
+                RET_I => return Vec::from(&self.pop_int() as &[u8]), // TODO: fix return values
                 CMP_I => {
                     let a = self.pop_int_i();
                     let b = self.pop_int_i();

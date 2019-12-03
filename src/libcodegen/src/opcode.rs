@@ -18,6 +18,12 @@ pub struct OpcodeGenerator<'a> {
 }
 
 impl OpcodeGenerator<'_> {
+    /// Creates a new Opcode Generator
+    /// ```
+    /// # use libcodegen::opcode::*;
+    /// # static INPUT: &str = "";
+    /// let gen = OpcodeGenerator::new(INPUT);
+    /// ```
     pub fn new(input: &str) -> OpcodeGenerator {
         OpcodeGenerator {
             input,
@@ -33,11 +39,45 @@ impl OpcodeGenerator<'_> {
     fn to_str(&self, span: &libparser::span::Span) -> String {
         String::from(&self.input[span.pos.0..span.pos.1])
     }
-
+    /// Clones the generated module and returns a reference to it.
+    /// ```
+    /// # use libcodegen::opcode::*;
+    /// # static INPUT: &str = "";
+    /// let gen = OpcodeGenerator::new(INPUT);
+    /// // gen.gen_module(), etc
+    /// let module = gen.gen();
+    /// println!("{:?}", module);
+    /// ```
     pub fn gen(&self) -> Rc<RefCell<Module>> {
         Rc::clone(&self.module)
     }
 
+    /// Get current output buffer
+    pub fn out(&self) -> Vec<u8> {
+        self.out.clone()
+    }
+
+    /// Generates a module
+    /// ```
+    /// # use libcodegen::opcode::*;
+    /// # use libparser::*;
+    ///  
+    /// static INPUT: &str = r"
+    ///     fn a() {
+    ///         
+    ///     }
+    /// ";
+    /// let parse_context = libparser::parse_context::ParseContext::new(INPUT);
+    /// let mut parser = libparser::parser::Parser::new(INPUT, &parse_context);
+    /// let mut gen = OpcodeGenerator::new(INPUT);
+    ///
+    /// gen.gen_module(&parser.parse_block());
+    ///
+    /// let module = gen.gen();
+    /// let module = module.borrow();
+    /// let func = module.functions().get(&0);
+    /// assert_ne!(func, None)
+    /// ```
     pub fn gen_module(&mut self, block: &Block) {
         for stmt in block.body.iter() {
             match stmt {
@@ -48,6 +88,8 @@ impl OpcodeGenerator<'_> {
                     if let Some(_func) = self.functions.get(&name) {
                         panic!("Function already exists")
                     } else {
+                        let index = self.module.borrow_mut().new_const(name.clone().as_str());
+                        self.functions.insert(name.clone(), index);
                         let args: Vec<vm_type::Type> = args
                             .iter()
                             .map(|v| match *v {
@@ -63,8 +105,7 @@ impl OpcodeGenerator<'_> {
                         let instructions = self.out.clone();
                         self.reset();
                         let func = Function::new(instructions, args, Rc::clone(&self.module));
-                        let index = self.module.borrow_mut().push_fn(name.clone(), func);
-                        self.functions.insert(name, index);
+                        self.module.borrow_mut().push_fn(index, func);
                     }
                 }
                 _ => panic!("Only function decls in root block"), // TODO: fix this msg
@@ -72,6 +113,7 @@ impl OpcodeGenerator<'_> {
         }
     }
 
+    /// Reset after generating a function
     fn reset(&mut self) {
         self.out.clear();
         self.break_me.clear();
@@ -79,6 +121,30 @@ impl OpcodeGenerator<'_> {
         self.var_index = 0;
     }
 
+    /// Generate a block (inside a function)
+    /// ```
+    /// # use libcodegen::opcode::*;
+    /// # use libparser::*;
+    /// # use libvm::consts::*;
+    ///  
+    /// static INPUT: &str = r"
+    ///     let a = 2
+    ///     print_int(a)
+    /// ";
+    /// let parse_context = libparser::parse_context::ParseContext::new(INPUT);
+    /// let mut parser = libparser::parser::Parser::new(INPUT, &parse_context);
+    /// let mut gen = OpcodeGenerator::new(INPUT);
+    ///
+    /// gen.gen_block(&parser.parse_block());
+    ///
+    /// let out = gen.out();
+    /// assert_eq!(out, vec![
+    ///     PUSH_I, 0, 0, 0, 2,
+    ///     STO_I, 0,
+    ///     LOAD_I, 0,
+    ///     VIRTUAL, 0
+    /// ])
+    /// ```
     pub fn gen_block(&mut self, block: &Block) {
         for stmt in block.body.iter() {
             match stmt {
@@ -127,6 +193,10 @@ impl OpcodeGenerator<'_> {
                     }
                     self.break_me.clear();
                 }
+                Statement::Return(expr) => {
+                    self.gen_expr(expr);
+                    self.out.push(RET_I);
+                }
                 Statement::Break => {
                     self.out.push(GOTO);
                     self.out.push(0);
@@ -137,6 +207,33 @@ impl OpcodeGenerator<'_> {
         }
     }
 
+    /// Generate an expression (inside a block)
+    /// ```
+    /// # use libcodegen::opcode::*;
+    /// # use libparser::*;
+    /// # use libparser::ast::*;
+    /// # use libvm::consts::*;
+    ///  
+    /// static INPUT: &str = r"
+    ///     5 + 5
+    /// ";
+    /// let parse_context = libparser::parse_context::ParseContext::new(INPUT);
+    /// let mut parser = libparser::parser::Parser::new(INPUT, &parse_context);
+    /// let mut gen = OpcodeGenerator::new(INPUT);
+    ///
+    /// if let Statement::Expression(expr) = parser.parse_block().body.get(0).unwrap() {
+    ///     gen.gen_expr(&expr);
+    /// } else {
+    ///     panic!("Should have expression")
+    /// }
+    ///
+    /// let out = gen.out();
+    /// assert_eq!(out, vec![
+    ///     PUSH_I, 0, 0, 0, 5,
+    ///     PUSH_I, 0, 0, 0, 5,
+    ///     ADD_I
+    /// ])
+    /// ```
     pub fn gen_expr(&mut self, expr: &Expression) {
         match expr {
             Expression::Binary(lhs, op, rhs) => {

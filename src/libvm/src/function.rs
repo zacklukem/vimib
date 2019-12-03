@@ -4,6 +4,7 @@ use crate::vm_type::Type;
 use std::cell::RefCell;
 use std::rc::Rc;
 
+#[derive(PartialEq, Debug, Default, Clone)]
 pub struct Function {
     program: Vec<u8>,
     params: Vec<Type>,
