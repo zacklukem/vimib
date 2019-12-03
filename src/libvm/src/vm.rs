@@ -16,7 +16,7 @@ impl Vm<'_> {
     /// Create a new vm
     /// ```
     /// # use libvm::vm::Vm;
-    /// 
+    ///
     /// let vm = Vm::new(&[], Vec::new(), Default::default());
     /// ```
     pub fn new(program: &[u8], regs: Vec<u8>, module: Rc<RefCell<Module>>) -> Vm {
@@ -104,7 +104,7 @@ impl Vm<'_> {
     /// ```
     /// # use libvm::vm::Vm;
     /// # use libvm::consts::*;
-    /// 
+    ///
     /// let program = &[
     ///     PUSH_I, 0, 0, 0, 5,
     ///     PUSH_I, 0, 0, 0, 6,

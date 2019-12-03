@@ -31,7 +31,7 @@ impl Module {
     /// ```
     /// # use libvm::module::*;
     /// # use libvm::function::Function;
-    /// 
+    ///
     /// let mut module: Module = Default::default();
     /// let func: Function = Default::default();
     /// module.push_fn("main".to_string(), func.clone());
@@ -87,27 +87,27 @@ impl Module {
             );
         }
     }
-    
+
     /// Runs the main function and panics if it doesn't exist
     /// ```
     /// # use libvm::module::*;
     /// # use libvm::function::Function;
-    /// 
+    ///
     /// let mut module: Module = Default::default();
     /// let func: Function = Default::default();
     /// module.push_fn("main".to_string(), func.clone());
     /// module.run_main();
-    /// ``` 
+    /// ```
     pub fn run_main(&self) {
         self.get_main().run(Vec::new());
     }
 
     /// Pushes a function to the module
-    /// 
+    ///
     /// ```
     /// # use libvm::module::*;
     /// # use libvm::function::Function;
-    /// 
+    ///
     /// let mut module: Module = Default::default();
     /// let func: Function = Default::default();
     /// let index = module.new_const("main";
@@ -123,7 +123,7 @@ impl Module {
     /// ```
     /// # use libvm::module::*;
     /// # use libvm::function::Function;
-    /// 
+    ///
     /// let mut module: Module = Default::default();
     /// let func: Function = Default::default();
     /// let index = module.push_fn("main".to_string(), func.clone());
@@ -139,7 +139,7 @@ impl Module {
     /// ```
     /// # use libvm::module::*;
     /// # use libvm::function::Function;
-    /// 
+    ///
     /// let mut module: Module = Default::default();
     /// let func: Function = Default::default();
     /// let index = module.push_fn("main".to_string(), func.clone());
