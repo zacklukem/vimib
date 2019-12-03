@@ -34,7 +34,8 @@ impl Module {
     ///
     /// let mut module: Module = Default::default();
     /// let func: Function = Default::default();
-    /// module.push_fn("main".to_string(), func.clone());
+    /// let index = module.new_const("main");
+    /// module.push_fn(index, func.clone());
     /// let main = module.get_main();
     /// assert_eq!(*main, func);
     /// ```
@@ -95,7 +96,8 @@ impl Module {
     ///
     /// let mut module: Module = Default::default();
     /// let func: Function = Default::default();
-    /// module.push_fn("main".to_string(), func.clone());
+    /// let index = module.new_const("main");
+    /// module.push_fn(index, func.clone());
     /// module.run_main();
     /// ```
     pub fn run_main(&self) {
@@ -110,7 +112,7 @@ impl Module {
     ///
     /// let mut module: Module = Default::default();
     /// let func: Function = Default::default();
-    /// let index = module.new_const("main";
+    /// let index = module.new_const("main");
     /// module.push_fn(index, func.clone());
     /// let other = module.get_fn(index);
     /// assert_eq!(*other, func);
@@ -126,7 +128,8 @@ impl Module {
     ///
     /// let mut module: Module = Default::default();
     /// let func: Function = Default::default();
-    /// let index = module.push_fn("main".to_string(), func.clone());
+    /// let index = module.new_const("main");
+    /// module.push_fn(index, func.clone());
     /// let other = module.get_fn(index);
     /// assert_eq!(*other, func);
     /// ```
@@ -142,7 +145,8 @@ impl Module {
     ///
     /// let mut module: Module = Default::default();
     /// let func: Function = Default::default();
-    /// let index = module.push_fn("main".to_string(), func.clone());
+    /// let index = module.new_const("main");
+    /// module.push_fn(index, func.clone());
     /// let mut stack = vec![];
     /// module.call(index, &mut stack);
     /// ```
