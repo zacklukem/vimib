@@ -57,6 +57,15 @@ impl Vm<'_> {
         }
     }
 
+    /// Push an 32 bit num in the form of an f32 onto the stack
+    fn push_int_f(&mut self, v: f32) {
+        unsafe {
+            let mut a = std::mem::transmute::<f32, [u8; 4]>(v);
+            a.reverse();
+            self.push_int(a)
+        }
+    }
+
     /// Push an int in the form of an i32 onto the stack
     fn push_int_i(&mut self, v: i32) {
         let x = v as u32;
@@ -77,6 +86,13 @@ impl Vm<'_> {
         let mut out = [self.pop(), self.pop(), self.pop(), self.pop()];
         out.reverse();
         out
+    }
+
+    /// Pop an 32 bit num in the form of an f32 off the stack
+    fn pop_int_f(&mut self) -> f32 {
+        let mut array = self.pop_int();
+        array.reverse();
+        unsafe { std::mem::transmute(array) }
     }
 
     /// Pop an int in the form of an i32 off the stack
@@ -139,11 +155,25 @@ impl Vm<'_> {
 					let lhs = self.pop_int_i();
 					self.push_int_i(lhs $op rhs);
 				}
-			};
+            };
+            (f$op: tt) => {
+				{
+					let rhs = self.pop_int_f();
+                    let lhs = self.pop_int_f();
+					self.push_int_f(lhs $op rhs);
+				}
+            };
 			(ib$op: tt) => {
 				{
 					let rhs = self.pop_int_i();
 					let lhs = self.pop_int_i();
+					self.push((lhs $op rhs) as u8);
+				}
+            };
+			(fb$op: tt) => {
+				{
+					let rhs = self.pop_int_f();
+					let lhs = self.pop_int_f();
 					self.push((lhs $op rhs) as u8);
 				}
 			};
@@ -159,13 +189,32 @@ impl Vm<'_> {
                 MUL_I => binary_operator!(i*),
                 DIV_I => binary_operator!(i/),
                 MOD_I => binary_operator!(i%),
+                ADD_F => binary_operator!(f+),
+                SUB_F => binary_operator!(f-),
+                MUL_F => binary_operator!(f*),
+                DIV_F => binary_operator!(f/),
+                MOD_F => binary_operator!(f%),
+
+                NEG_I => {
+                    let n = self.pop_int_i();
+                    self.push_int_i(-n);
+                }
+
+                NOT => {
+                    let n = self.pop() != 0;
+                    self.push((!n) as u8);
+                }
 
                 NE => binary_operator!(ib!=),
                 EQ => binary_operator!(ib==),
-                GT => binary_operator!(ib>),
-                LT => binary_operator!(ib<),
-                GE => binary_operator!(ib>=),
-                LE => binary_operator!(ib<=),
+                GT_I => binary_operator!(ib>),
+                LT_I => binary_operator!(ib<),
+                GE_I => binary_operator!(ib>=),
+                LE_I => binary_operator!(ib<=),
+                GT_F => binary_operator!(fb>),
+                LT_F => binary_operator!(fb<),
+                GE_F => binary_operator!(fb>=),
+                LE_F => binary_operator!(fb<=),
 
                 DUP_I => {
                     self.push_int(self.get_int());
@@ -211,6 +260,7 @@ impl Vm<'_> {
                             }
                             println!("{}", std::str::from_utf8(val.as_slice()).unwrap());
                         }
+                        0x03 => println!("{}", self.pop_int_f()),
                         _ => {}
                     }
                 }

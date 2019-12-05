@@ -1,7 +1,7 @@
 use crate::lexer::{self, TokenKind};
 use crate::span::Span;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum LiteralKind {
     String,
     Int,
@@ -19,7 +19,7 @@ impl From<lexer::LiteralKind> for LiteralKind {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Op {
     Star,
     Slash,
@@ -56,17 +56,17 @@ impl From<TokenKind> for Op {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Expression {
     Literal { val: Span, kind: LiteralKind },
-    Binary(Box<Expression>, Op, Box<Expression>),
-    Unary(Op, Box<Expression>),
+    Binary(Box<Expression>, Op, Box<Expression>, Span),
+    Unary(Op, Box<Expression>, Span),
     Ident { val: Span },
     FunctionCall(Span, Vec<Expression>),
     Dummy,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Type {
     Str,
     Int,
@@ -74,13 +74,13 @@ pub enum Type {
     Void,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Ident {
     Typed(Span, Type),
     Untyped(Span),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Statement {
     Assign(Span, Expression),
     FnDecl {
@@ -89,7 +89,7 @@ pub enum Statement {
         args: Vec<Ident>,
         block: Block,
     },
-    Return(Expression),
+    Return(Expression, Span),
     Mutate(Span, Expression),
     If(Expression, Block, Option<Box<Statement>>),
     Else(Block),
@@ -99,7 +99,7 @@ pub enum Statement {
     Dummy,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Block {
     pub body: Vec<Statement>,
 }

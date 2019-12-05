@@ -15,7 +15,7 @@ impl Parser<'_> {
             .until(vec![TokenKind::EqEqual, TokenKind::NotEqual])
         {
             let rhs = self.comparison();
-            expr = Expression::Binary(Box::new(expr), Op::from(op.kind), Box::new(rhs));
+            expr = Expression::Binary(Box::new(expr), Op::from(op.kind), Box::new(rhs), op.span);
         }
 
         expr
@@ -31,7 +31,7 @@ impl Parser<'_> {
             TokenKind::GtEqual,
         ]) {
             let rhs = self.addition();
-            expr = Expression::Binary(Box::new(expr), Op::from(op.kind), Box::new(rhs));
+            expr = Expression::Binary(Box::new(expr), Op::from(op.kind), Box::new(rhs), op.span);
         }
 
         expr
@@ -42,7 +42,7 @@ impl Parser<'_> {
 
         while let Some(op) = self.lexer.until(vec![TokenKind::Plus, TokenKind::Minus]) {
             let rhs = self.multiplication();
-            expr = Expression::Binary(Box::new(expr), Op::from(op.kind), Box::new(rhs));
+            expr = Expression::Binary(Box::new(expr), Op::from(op.kind), Box::new(rhs), op.span);
         }
 
         expr
@@ -53,7 +53,7 @@ impl Parser<'_> {
 
         while let Some(op) = self.lexer.until(vec![TokenKind::Star, TokenKind::Slash]) {
             let rhs = self.multiplication();
-            expr = Expression::Binary(Box::new(expr), Op::from(op.kind), Box::new(rhs));
+            expr = Expression::Binary(Box::new(expr), Op::from(op.kind), Box::new(rhs), op.span);
         }
 
         expr
@@ -62,7 +62,7 @@ impl Parser<'_> {
     fn unary(&mut self) -> Expression {
         if let Some(op) = self.lexer.until(vec![TokenKind::Star, TokenKind::Slash]) {
             let rhs = self.multiplication();
-            Expression::Unary(Op::from(op.kind), Box::new(rhs))
+            Expression::Unary(Op::from(op.kind), Box::new(rhs), op.span)
         } else {
             self.primary()
         }
@@ -154,7 +154,7 @@ mod tests {
         let mut parser = Parser::new(INPUT, &ctx);
         let expr = parser.parse_expression();
         match expr {
-            Expression::Binary(_, op, _) => assert_eq!(op, Op::Plus),
+            Expression::Binary(_, op, _, _) => assert_eq!(op, Op::Plus),
             _ => assert!(false),
         }
     }

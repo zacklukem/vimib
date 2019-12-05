@@ -6,13 +6,27 @@ pub const SUB_I: u8 = 0x0d;
 pub const MUL_I: u8 = 0x0e;
 pub const DIV_I: u8 = 0x0f;
 pub const MOD_I: u8 = 0x10;
+pub const NEG_I: u8 = 0x18;
+
+pub const ADD_F: u8 = 0x2c;
+pub const SUB_F: u8 = 0x2d;
+pub const MUL_F: u8 = 0x2e;
+pub const DIV_F: u8 = 0x2f;
+pub const MOD_F: u8 = 0x30;
+pub const NEG_F: u8 = 0x28;
 
 pub const NE: u8 = 0x11;
 pub const EQ: u8 = 0x12;
-pub const GT: u8 = 0x13;
-pub const LT: u8 = 0x14;
-pub const LE: u8 = 0x15;
-pub const GE: u8 = 0x16;
+pub const GT_I: u8 = 0x13;
+pub const LT_I: u8 = 0x14;
+pub const LE_I: u8 = 0x15;
+pub const GE_I: u8 = 0x16;
+pub const GT_F: u8 = 0x23;
+pub const LT_F: u8 = 0x24;
+pub const LE_F: u8 = 0x25;
+pub const GE_F: u8 = 0x26;
+
+pub const NOT: u8 = 0x17;
 
 pub const CMP_I: u8 = 0x20;
 
@@ -57,12 +71,23 @@ pub fn disassemble_each(val: u8) -> Option<&'static str> {
         DIV_I => Some("div_i"),
         MOD_I => Some("mod_i"),
         CMP_I => Some("cmp_i"),
+        ADD_F => Some("add_f"),
+        SUB_F => Some("sub_f"),
+        MUL_F => Some("mul_f"),
+        DIV_F => Some("div_f"),
+        MOD_F => Some("mod_f"),
+        NOT => Some("not"),
+        NEG_I => Some("neg_i"),
         NE => Some("ne"),
         EQ => Some("eq"),
-        LT => Some("lt"),
-        GT => Some("gt"),
-        LE => Some("le"),
-        GE => Some("ge"),
+        LT_I => Some("lt_i"),
+        GT_I => Some("gt_i"),
+        LE_I => Some("le_i"),
+        GE_I => Some("ge_i"),
+        LT_F => Some("lt_f"),
+        GT_F => Some("gt_f"),
+        LE_F => Some("le_f"),
+        GE_F => Some("ge_f"),
         IF_T => Some("if_t"),
         IF_F => Some("if_f"),
         IF_NE => Some("if_ne"),

@@ -48,23 +48,25 @@ Example bytecode (each byte separated by space):
 
 That bytecode is generated from the following:
 ```rust
-let i = 0
+fn main() {
+    let i = 0
 
-loop {
-    print_int(i)
-    if i >= 10 {
-        print_str("Hello,")
-        print_str("World!")
-        break
+    loop {
+        print_int(i)
+        if i >= 10 {
+            print_str("Hello,")
+            print_str("World!")
+            break
+        }
+        i = i + 1
     }
-    i = i + 1
 }
 ```
 The parser can parse function declarations as well, but there is no bytecode generated yet for functions.  Nested loops also don't generate properly.
 
 ## ToDo
  - [x] strings
- - [ ] floats
+ - [x] floats
  - [ ] 64 bit numbers
  - [ ] better loops
  - [x] functions
@@ -81,7 +83,9 @@ digit   = "0" | ... | "9" ;
 letter  = "a" | ... | "z" | "A" | ... | "Z" ;
 number  = digit, { digit }, [ ".", digit, { digit } ] ;
 string  = '"', UTF_8_CHAR_NOT_QUOTE, '"' ;
-ident   = ( letter | "_" ), { letter | number | "_" } ;
+ident   = ( letter | "_" ), { letter | digit | "_" } ;
+block   = "{", { stmt }, "}" ;
+type    = "i32" | "f32" ;
 ```
 
 ### Expressions
@@ -111,7 +115,6 @@ stmt    = expr
         | "break"
         | "let", ident, "=", expr
         | ident, "=", expr ;
-block   = "{", { stmt }, "}" ;
 if stmt = "if", expr, block,
           { "else if", expr, block },
           [ "else", block ] ;
@@ -119,7 +122,8 @@ if stmt = "if", expr, block,
 
 ### Functions
 ```ebnf
-fn_decl = "fn", ident, "(" [ ident, { ",", ident } ] ")", block ;
+param   = ident, ":", param ;
+fn_decl = "fn", ident, "(" [ param, { ",", param } ] ")", [ "->", type ], block ;
 ```
 
 ### Program

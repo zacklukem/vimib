@@ -1,6 +1,15 @@
 #[derive(Debug, PartialEq, Clone)]
 pub enum Type {
     I32,
+    Void,
+    String,
+    F32,
+}
+
+impl std::default::Default for Type {
+    fn default() -> Type {
+        Type::Void
+    }
 }
 
 impl Type {

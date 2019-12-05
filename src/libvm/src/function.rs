@@ -8,16 +8,27 @@ use std::rc::Rc;
 pub struct Function {
     program: Vec<u8>,
     params: Vec<Type>,
+    return_type: Type,
     module: Rc<RefCell<Module>>,
 }
 
 impl Function {
-    pub fn new(program: Vec<u8>, params: Vec<Type>, module: Rc<RefCell<Module>>) -> Function {
+    pub fn new(
+        program: Vec<u8>,
+        params: Vec<Type>,
+        return_type: Type,
+        module: Rc<RefCell<Module>>,
+    ) -> Function {
         Function {
             program,
             params,
+            return_type,
             module,
         }
+    }
+
+    pub fn return_type(&self) -> &Type {
+        &self.return_type
     }
 
     pub fn program(&self) -> &Vec<u8> {

@@ -27,6 +27,10 @@ pub enum TokenKind {
     Loop,
     Return,
 
+    /// Types
+    I32,
+    F32,
+
     /// Delimiter
     OpenParen,
     CloseParen,
@@ -53,13 +57,14 @@ pub enum TokenKind {
     Lt,
     Gt,
 
-    /// Double Equal
+    /// Double Ops
     EqEqual,
     LtEqual,
     GtEqual,
     AndAnd,
     OrOr,
     NotEqual,
+    Arrow,
 
     Semi,
     Eof,
@@ -76,6 +81,8 @@ fn keyword(text: &str) -> Option<TokenKind> {
         "break" => Some(TokenKind::Break),
         "loop" => Some(TokenKind::Loop),
         "return" => Some(TokenKind::Return),
+        "i32" => Some(TokenKind::I32),
+        "f32" => Some(TokenKind::F32),
         _ => None,
     }
 }
@@ -302,7 +309,6 @@ impl<'a> Cursor<'a> {
             '.' => TokenKind::Dot,
             '?' => TokenKind::Question,
             ':' => TokenKind::Colon,
-            '-' => TokenKind::Minus,
             '+' => TokenKind::Plus,
             '*' => TokenKind::Star,
             '^' => TokenKind::Caret,
@@ -356,6 +362,14 @@ impl<'a> Cursor<'a> {
                     TokenKind::Gt
                 }
             }
+            '-' => {
+                if self.peek(0) == '>' {
+                    self.next();
+                    TokenKind::Arrow
+                } else {
+                    TokenKind::Minus
+                }
+            }
 
             '\0' => TokenKind::Eof,
 
@@ -383,7 +397,7 @@ fn eof() -> Token {
 
 pub struct Lexer<'a> {
     tokens: Tokenizer<'a>,
-    context: &'a ParseContext<'a>,
+    pub context: &'a ParseContext<'a>,
 }
 
 impl<'a> Lexer<'a> {

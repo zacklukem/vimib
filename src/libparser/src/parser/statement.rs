@@ -20,9 +20,9 @@ impl Parser<'_> {
                 }
             }
             TokenKind::Return => {
-                self.lexer.next(); // return keyword
+                let keyword = self.lexer.next(); // return keyword
                 let expr = self.parse_expression();
-                Some(Statement::Return(expr))
+                Some(Statement::Return(expr, keyword.span))
             }
             TokenKind::Fn => self.parse_function_decl(),
             TokenKind::If => self.parse_if_statement(),
@@ -53,6 +53,20 @@ impl Parser<'_> {
         }
     }
 
+    fn parse_type(&mut self) -> Type {
+        let next = self.lexer.peek(0);
+        let out = match next.kind {
+            TokenKind::I32 => Type::Int,
+            TokenKind::F32 => Type::Float,
+            _ => {
+                self.lexer.context.error(next.span, "Expected type");
+                Type::Void
+            }
+        };
+        self.lexer.next();
+        out
+    }
+
     fn parse_function_decl(&mut self) -> Option<Statement> {
         self.lexer.next(); // fn keyword
         let ident = self
@@ -72,7 +86,14 @@ impl Parser<'_> {
                 let peeked = self.lexer.peek(0);
                 if peeked.kind == TokenKind::Identifier {
                     let ident = self.lexer.next(); // consume
-                    args.push(Ident::Untyped(ident.span));
+                    let colon = self
+                        .lexer
+                        .expect(TokenKind::Colon, "Expected colon and type");
+                    if colon == None {
+                        return Some(Statement::Dummy);
+                    }
+                    let arg_type = self.parse_type();
+                    args.push(Ident::Typed(ident.span, arg_type));
                     let peeked = self.lexer.peek(0);
                     if peeked.kind == TokenKind::Comma {
                         self.lexer.next(); // Comma
@@ -90,6 +111,16 @@ impl Parser<'_> {
             if close_paren == None {
                 return Some(Statement::Dummy);
             }
+
+            let mut ret_type = Type::Void;
+
+            let arrow = self.lexer.peek(0);
+
+            if arrow.kind == TokenKind::Arrow {
+                self.lexer.next();
+                ret_type = self.parse_type();
+            }
+
             let open_brace = self
                 .lexer
                 .expect(TokenKind::OpenBrace, "Expected open brace");
@@ -101,7 +132,7 @@ impl Parser<'_> {
 
             Some(Statement::FnDecl {
                 name: ident.span,
-                return_type: Type::Void,
+                return_type: ret_type,
                 args,
                 block,
             })

@@ -81,9 +81,10 @@ impl Module {
                 name.push(*iter.next().unwrap() as char);
             }
             println!(
-                "{}({:?}):\n{}",
+                "{}({:?}) -> {:?}:\n{}",
                 name,
                 func.params(),
+                func.return_type(),
                 consts::disassemble(func.program().as_slice())
             );
         }
@@ -156,6 +157,9 @@ impl Module {
         for param in func.params().iter() {
             let len = match *param {
                 Type::I32 => 4,
+                Type::F32 => 4,
+                Type::Void => 0,
+                Type::String => 0, // FIXME: find out length? pointer time i guess...
             };
             for _ in 0..len {
                 // params.push(0);

@@ -25,8 +25,11 @@ impl ParseContext<'_> {
         eprintln!("\u{001b}[33merror: {}\u{001b}[0m", message);
         eprintln!("    \u{001b}[33m{} |\u{001b}[0m {}", num_lines + 1, line);
         eprintln!(
-            "       {}^",
-            (0..(span.pos.0 - covered)).map(|_| " ").collect::<String>()
+            "       \u{001b}[34m{}{}\u{001b}[0m",
+            (0..(span.pos.0 - covered)).map(|_| " ").collect::<String>(),
+            (0..(span.pos.1 - span.pos.0))
+                .map(|_| "^")
+                .collect::<String>()
         );
     }
 }
