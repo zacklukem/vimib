@@ -3,6 +3,7 @@ use crate::module::Module;
 use byteorder::{BigEndian, LittleEndian, ReadBytesExt, WriteBytesExt};
 use std::cell::RefCell;
 use std::cmp::Ordering;
+use std::io;
 use std::io::Cursor;
 use std::rc::Rc;
 
@@ -13,6 +14,7 @@ pub struct Vm<'a> {
     regs: Vec<u8>,
     stack: Vec<u8>,
     module: Rc<RefCell<Module>>,
+    is_debug: bool,
 }
 
 impl Vm<'_> {
@@ -30,6 +32,7 @@ impl Vm<'_> {
             regs,
             stack: Vec::new(),
             module,
+            is_debug: std::env::var("VIMIB_DEBUG").is_ok(),
         }
     }
 
@@ -130,6 +133,16 @@ impl Vm<'_> {
     /// assert_eq!(out, vec![11, 0, 0, 0]);
     /// ```
     pub fn run(&mut self) -> Vec<u8> {
+        while self.index < self.program.len() {
+            if let Some(ret) = self.execute() {
+                return ret;
+            }
+        }
+        vec![]
+    }
+
+    #[allow(clippy::cognitive_complexity)] // TODO: split this function up
+    fn execute(&mut self) -> Option<Vec<u8>> {
         macro_rules! ordering {
             ($a: expr) => {{
                 let location = self.next();
@@ -175,124 +188,198 @@ impl Vm<'_> {
 					self.push((lhs $op rhs) as u8);
 				}
 			};
-		}
-        while self.index < self.program.len() {
-            match self.next() {
-                PUSH_I => {
-                    let val = self.next_int();
-                    self.push_32(val);
-                }
-                ADD_I => binary_operator!(i+),
-                SUB_I => binary_operator!(i-),
-                MUL_I => binary_operator!(i*),
-                DIV_I => binary_operator!(i/),
-                MOD_I => binary_operator!(i%),
-                ADD_F => binary_operator!(f+),
-                SUB_F => binary_operator!(f-),
-                MUL_F => binary_operator!(f*),
-                DIV_F => binary_operator!(f/),
-                MOD_F => binary_operator!(f%),
-
-                NEG_I => {
-                    let n = self.pop_i32();
-                    self.push_i32(-n);
-                }
-
-                NOT => {
-                    let n = self.pop() != 0;
-                    self.push((!n) as u8);
-                }
-
-                NE => binary_operator!(ib!=),
-                EQ => binary_operator!(ib==),
-                GT_I => binary_operator!(ib>),
-                LT_I => binary_operator!(ib<),
-                GE_I => binary_operator!(ib>=),
-                LE_I => binary_operator!(ib<=),
-                GT_F => binary_operator!(fb>),
-                LT_F => binary_operator!(fb<),
-                GE_F => binary_operator!(fb>=),
-                LE_F => binary_operator!(fb<=),
-
-                DUP_I => {
-                    self.push_32(self.get_int());
-                }
-                GOTO => {
-                    let location = self.next();
-                    self.index = location as usize;
-                }
-                STO_I => {
-                    let reg = self.next() as usize;
-                    let val = self.pop_32();
-                    if self.regs.len() <= reg + 3 {
-                        for v in val.iter() {
-                            self.regs.push(*v);
-                        }
-                    } else {
-                        for (i, v) in val.iter().enumerate() {
-                            *self.regs.get_mut(i).unwrap() = *v;
-                        }
-                    }
-                }
-                LOAD_I => {
-                    let reg = self.next() as usize;
-                    for i in 0..4 {
-                        self.push(self.regs[reg + i]);
-                    }
-                }
-                CALL => {
-                    let index = self.next() as usize;
-                    let ret = self.module.borrow().call(index, &mut self.stack);
-                    self.stack.extend(ret.iter());
-                }
-                VIRTUAL => {
-                    let call = self.next();
-                    match call {
-                        0x00 => println!("{}", self.pop_i32()),
-                        0x01 => println!("STACK: {:?}", self.stack),
-                        0x02 => {
-                            let len = self.pop();
-                            let mut val = Vec::with_capacity(len as usize);
-                            for _ in 0..len {
-                                val.push(self.pop());
-                            }
-                            println!("{}", std::str::from_utf8(val.as_slice()).unwrap());
-                        }
-                        0x03 => println!("{}", self.pop_f32()),
-                        _ => {}
-                    }
-                }
-                LDC => {
-                    let index = self.next() as usize;
-                    let len = self.module.borrow().constants()[index];
-                    let mut constant = Vec::with_capacity(len as usize + 1);
-                    for i in 0..=len {
-                        constant.push(self.module.borrow().constants()[index + i as usize])
-                    }
-                    constant.reverse();
-                    self.stack.extend(constant.iter());
-                }
-                RET_I => return Vec::from(&self.pop_32() as &[u8]), // TODO: fix return values
-                CMP_I => {
-                    let a = self.pop_i32();
-                    let b = self.pop_i32();
-                    self.push(match a.cmp(&b) {
-                        Ordering::Equal => 0x00,
-                        Ordering::Greater => 0x01,
-                        Ordering::Less => 0x02,
-                    })
-                }
-                IF_T => ordering!(0x01),
-                IF_F => ordering!(0x00),
-                IF_NE => ordering!(0x01, 0x02),
-                IF_EQ => ordering!(0x00),
-                IF_GT => ordering!(0x01),
-                IF_LT => ordering!(0x02),
-                IF_LE => ordering!(0x02, 0x00),
-                IF_GE => ordering!(0x01, 0x00),
-                _ => panic!("Unknown opcode: {}", self.current()),
-            }
         }
-        vec![]
+
+        if self.is_debug {
+            let mut out = String::new();
+            let mut program = self.program.iter().enumerate();
+            macro_rules! push_n {
+                ($n: expr) => {
+                    for _ in 0..$n {
+                        out.push(' ');
+                        out.push_str(&program.next().unwrap().1.to_string());
+                    }
+                };
+            }
+            if let Some((i, v)) = program.nth(self.index) {
+                let i_str = i.to_string();
+                out.push_str("\u{001b}[33m"); // red
+                out.push_str(&i_str);
+                out.push_str(": ");
+                out.push_str("\u{001b}[0m"); // reset
+                for _ in 0..(3 - i_str.len()) {
+                    out.push(' ');
+                }
+                out.push_str("\u{001b}[31m"); // blue
+                let in_str = disassemble_each(*v).unwrap();
+                out.push_str(in_str);
+                for _ in 0..(8 - in_str.len()) {
+                    out.push(' ');
+                }
+                out.push_str("\u{001b}[0m"); // reset
+                match *v {
+                    PUSH_I => push_n!(4),
+                    VIRTUAL
+                    | GOTO
+                    | STO_I
+                    | LOAD_I
+                    | STO_V
+                    | LOAD_V
+                    | LDC
+                    | CALL
+                    | IF_T..=IF_GE => push_n!(1),
+
+                    _ => {}
+                }
+                out.push('\n');
+            }
+            println!("{}", out);
+            println!("STACK: {:?}", self.stack);
+            println!("REGS:  {:?}", self.regs);
+            let mut input = String::new();
+            io::stdin()
+                .read_line(&mut input)
+                .expect("Couldn't read line");
+        }
+        match self.next() {
+            PUSH_I => {
+                let val = self.next_int();
+                self.push_32(val);
+            }
+            ADD_I => binary_operator!(i+),
+            SUB_I => binary_operator!(i-),
+            MUL_I => binary_operator!(i*),
+            DIV_I => binary_operator!(i/),
+            MOD_I => binary_operator!(i%),
+            ADD_F => binary_operator!(f+),
+            SUB_F => binary_operator!(f-),
+            MUL_F => binary_operator!(f*),
+            DIV_F => binary_operator!(f/),
+            MOD_F => binary_operator!(f%),
+
+            NEG_I => {
+                let n = self.pop_i32();
+                self.push_i32(-n);
+            }
+
+            NOT => {
+                let n = self.pop() != 0;
+                self.push((!n) as u8);
+            }
+
+            NE => binary_operator!(ib!=),
+            EQ => binary_operator!(ib==),
+            GT_I => binary_operator!(ib>),
+            LT_I => binary_operator!(ib<),
+            GE_I => binary_operator!(ib>=),
+            LE_I => binary_operator!(ib<=),
+            GT_F => binary_operator!(fb>),
+            LT_F => binary_operator!(fb<),
+            GE_F => binary_operator!(fb>=),
+            LE_F => binary_operator!(fb<=),
+
+            DUP_I => {
+                self.push_32(self.get_int());
+            }
+            GOTO => {
+                let location = self.next();
+                self.index = location as usize;
+            }
+            STO_I => {
+                let reg = self.next() as usize;
+                let val = self.pop_32();
+                if self.regs.len() <= reg + 3 {
+                    for v in val.iter() {
+                        self.regs.push(*v);
+                    }
+                } else {
+                    for (i, v) in val.iter().enumerate() {
+                        *self.regs.get_mut(reg + i).unwrap() = *v;
+                    }
+                }
+            }
+            LOAD_I => {
+                let reg = self.next() as usize;
+                for i in 0..4 {
+                    self.push(self.regs[reg + i]);
+                }
+            }
+            STO_V => {
+                let reg = self.next() as usize;
+                let len = self.pop() as usize;
+                if self.regs.len() <= reg + len + 1 {
+                    self.regs.push(len as u8);
+                    for _ in 0..len {
+                        let v = self.pop();
+                        self.regs.push(v);
+                    }
+                } else {
+                    *self.regs.get_mut(reg).unwrap() = len as u8;
+                    for i in 0..len {
+                        let v = self.pop();
+                        *self.regs.get_mut(reg + i + 1).unwrap() = v;
+                    }
+                }
+            }
+            LOAD_V => {
+                let reg = self.next() as usize;
+                let len = self.regs[reg] as usize;
+                for i in 0..=len {
+                    self.push(self.regs[reg + len - i]);
+                }
+            }
+            CALL => {
+                let index = self.next() as usize;
+                let ret = self.module.borrow().call(index, &mut self.stack);
+                self.stack.extend(ret.iter());
+            }
+            VIRTUAL => {
+                let call = self.next();
+                match call {
+                    0x00 => println!("{}", self.pop_i32()),
+                    0x01 => println!("STACK: {:?}\nREGS: {:?}", self.stack, self.regs),
+                    0x02 => {
+                        let len = self.pop();
+                        let mut val = Vec::with_capacity(len as usize);
+                        for _ in 0..len {
+                            val.push(self.pop());
+                        }
+                        println!("{}", std::str::from_utf8(val.as_slice()).unwrap());
+                    }
+                    0x03 => println!("{}", self.pop_f32()),
+                    _ => {}
+                }
+            }
+            LDC => {
+                let index = self.next() as usize;
+                let len = self.module.borrow().constants()[index];
+                let mut constant = Vec::with_capacity(len as usize + 1);
+                for i in 0..=len {
+                    constant.push(self.module.borrow().constants()[index + i as usize])
+                }
+                constant.reverse();
+                self.stack.extend(constant.iter());
+            }
+            RET_I => return Some(Vec::from(&self.pop_32() as &[u8])), // TODO: fix return values
+            CMP_I => {
+                let a = self.pop_i32();
+                let b = self.pop_i32();
+                self.push(match a.cmp(&b) {
+                    Ordering::Equal => 0x00,
+                    Ordering::Greater => 0x01,
+                    Ordering::Less => 0x02,
+                })
+            }
+            IF_T => ordering!(0x01),
+            IF_F => ordering!(0x00),
+            IF_NE => ordering!(0x01, 0x02),
+            IF_EQ => ordering!(0x00),
+            IF_GT => ordering!(0x01),
+            IF_LT => ordering!(0x02),
+            IF_LE => ordering!(0x02, 0x00),
+            IF_GE => ordering!(0x01, 0x00),
+            _ => panic!("Unknown opcode: {}", self.current()),
+        }
+        None
     }
 }

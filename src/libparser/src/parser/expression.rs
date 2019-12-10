@@ -3,7 +3,6 @@ use crate::ast::*;
 use crate::lexer::TokenKind;
 
 impl Parser<'_> {
-
     /// Parse an expression
     /// ```
     /// # use libparser::ast::{Expression, Op};

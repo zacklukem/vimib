@@ -12,7 +12,6 @@ pub struct Parser<'a> {
 }
 
 impl Parser<'_> {
-
     /// Create a new parser with the input and context given
     /// ```
     /// # use libparser::parser::*;

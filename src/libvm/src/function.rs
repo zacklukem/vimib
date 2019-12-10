@@ -17,9 +17,9 @@ pub struct Function {
 
 impl Function {
     /// Create a new function with these initial values
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```
     /// # use libvm::function::*;
     /// let function = Function::new(vec![], vec![], Default::default(), Default::default());
@@ -59,7 +59,7 @@ impl Function {
     /// time the program is run with a fresh state and scope.  It returns the
     /// last `n` digits of the stack where `n` is the size of the function's
     /// return type.
-    /// 
+    ///
     /// # Examples
     /// ```
     /// # use libvm::function::*;

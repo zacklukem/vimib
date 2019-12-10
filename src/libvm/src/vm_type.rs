@@ -4,7 +4,7 @@
 pub enum Type {
     I32,
     Void,
-    String,
+    String(usize),
     F32,
 }
 

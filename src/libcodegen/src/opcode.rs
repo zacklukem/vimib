@@ -24,7 +24,7 @@ fn ast_type_to_vm_type(t: &Type) -> vm_type::Type {
         Type::Int => vm_type::Type::I32,
         Type::Float => vm_type::Type::F32,
         Type::Void => vm_type::Type::Void,
-        Type::Str => vm_type::Type::String,
+        Type::Str => vm_type::Type::String(0),
     }
 }
 
@@ -181,13 +181,23 @@ impl OpcodeGenerator<'_> {
                     let var_type = self.gen_expr(expr);
                     let name = self.to_str(name);
 
-                    self.out.push(STO_I);
+                    self.out.push(match var_type {
+                        vm_type::Type::I32 | vm_type::Type::F32 => STO_I,
+                        vm_type::Type::String(_) => STO_V,
+                        _ => NOP,
+                    });
+
                     if let Some((index, _)) = self.var_map.get(&name) {
                         self.out.push(*index);
                     } else {
-                        self.var_map.insert(name, (self.var_index, var_type));
+                        self.var_map
+                            .insert(name, (self.var_index, var_type.clone()));
                         self.out.push(self.var_index);
-                        self.var_index += 4; // FIXME: Detect Type
+                        self.var_index += match var_type {
+                            vm_type::Type::I32 | vm_type::Type::F32 => 4,
+                            vm_type::Type::String(len) => len as u8,
+                            vm_type::Type::Void => 0,
+                        }; // FIXME: Detect string len
                     }
                 }
                 Statement::Mutate(name, expr) => {
@@ -354,8 +364,16 @@ impl OpcodeGenerator<'_> {
             },
             Expression::Ident { val } => {
                 let ident = self.to_str(val);
-                self.out.push(LOAD_I);
                 if let Some((index, var_type)) = self.var_map.get(&ident) {
+                    match var_type {
+                        vm_type::Type::I32 | vm_type::Type::F32 => {
+                            self.out.push(LOAD_I);
+                        }
+                        vm_type::Type::String(_) => {
+                            self.out.push(LOAD_V);
+                        }
+                        vm_type::Type::Void => {}
+                    }
                     self.out.push(*index);
                     var_type.clone()
                 } else {
@@ -385,7 +403,7 @@ impl OpcodeGenerator<'_> {
                         let c_index = self.module.borrow_mut().new_const(&val[1..val.len() - 1]);
                         self.out.push(LDC);
                         self.out.push(c_index as u8);
-                        vm_type::Type::String
+                        vm_type::Type::String(val.len() - 1)
                     }
                     LiteralKind::Float => {
                         self.out.push(PUSH_I);

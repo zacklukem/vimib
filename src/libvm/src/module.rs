@@ -159,7 +159,7 @@ impl Module {
                 Type::I32 => 4,
                 Type::F32 => 4,
                 Type::Void => 0,
-                Type::String => 0, // FIXME: find out length? pointer time i guess...
+                Type::String(len) => len,
             };
             for _ in 0..len {
                 // params.push(0);

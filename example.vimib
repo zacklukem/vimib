@@ -10,9 +10,11 @@ fn fib(num: i32) -> i32 {
 }
 
 fn main() {
+    let string = "Hello, World!"
     let i = 1
     let b = 2.5
     print_float(add(b, 3.25))
+    print_str(string)
     loop {
         print_int(fib(i))
         if i >= 10 {

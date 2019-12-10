@@ -427,7 +427,6 @@ impl<'a> Lexer<'a> {
         self.tokens.next().unwrap_or_else(eof)
     }
 
-
     /// Peek `n` tokens ahead
     /// # Examples
     /// ```
@@ -450,7 +449,7 @@ impl<'a> Lexer<'a> {
     /// let context = Default::default();
     /// let mut lexer = Lexer::new("234 + ident", &context);
     /// assert_ne!(lexer.until(vec![TokenKind::Literal(LiteralKind::Int)]), None);
-    /// assert_eq!(lexer.until(vec![TokenKind::Literal(LiteralKind::Int)]), None); 
+    /// assert_eq!(lexer.until(vec![TokenKind::Literal(LiteralKind::Int)]), None);
     /// ```
     pub fn until(&mut self, kind: Vec<TokenKind>) -> Option<Token> {
         let peeked = self.peek(0);
