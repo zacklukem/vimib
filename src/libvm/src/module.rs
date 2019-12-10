@@ -11,9 +11,9 @@ pub struct Module {
 
 impl Module {
     /// Creates a new string constant and returns it's index
+    /// # Examples
     /// ```
     /// # use libvm::module::*;
-    ///
     /// let mut module: Module = Default::default();
     /// let index = module.new_const("Hello, World!");
     /// assert_eq!(module.constants()[index], 13);
@@ -28,10 +28,10 @@ impl Module {
     }
 
     /// Return the main function and panics if it doesn't exist
+    /// # Examples
     /// ```
     /// # use libvm::module::*;
     /// # use libvm::function::Function;
-    ///
     /// let mut module: Module = Default::default();
     /// let func: Function = Default::default();
     /// let index = module.new_const("main");
@@ -56,6 +56,7 @@ impl Module {
     }
 
     /// Disassembles the module and prints it out
+    /// # Examples
     /// ```
     /// # use libvm::module::Module;
     /// let module: Module = Default::default();
@@ -91,10 +92,10 @@ impl Module {
     }
 
     /// Runs the main function and panics if it doesn't exist
+    /// # Examples
     /// ```
     /// # use libvm::module::*;
     /// # use libvm::function::Function;
-    ///
     /// let mut module: Module = Default::default();
     /// let func: Function = Default::default();
     /// let index = module.new_const("main");
@@ -106,11 +107,10 @@ impl Module {
     }
 
     /// Pushes a function to the module
-    ///
+    /// # Examples
     /// ```
     /// # use libvm::module::*;
     /// # use libvm::function::Function;
-    ///
     /// let mut module: Module = Default::default();
     /// let func: Function = Default::default();
     /// let index = module.new_const("main");
@@ -123,10 +123,10 @@ impl Module {
     }
 
     /// Gets a function by it's id and returns a reference to it
+    /// # Examples
     /// ```
     /// # use libvm::module::*;
     /// # use libvm::function::Function;
-    ///
     /// let mut module: Module = Default::default();
     /// let func: Function = Default::default();
     /// let index = module.new_const("main");
@@ -140,10 +140,10 @@ impl Module {
 
     /// Calls a function with a stack as parameters and return's its return
     /// results
+    /// # Examples
     /// ```
     /// # use libvm::module::*;
     /// # use libvm::function::Function;
-    ///
     /// let mut module: Module = Default::default();
     /// let func: Function = Default::default();
     /// let index = module.new_const("main");

@@ -3,6 +3,20 @@ use crate::ast::*;
 use crate::lexer::TokenKind;
 
 impl Parser<'_> {
+    /// Parse a statement
+    /// ```
+    /// # use libparser::parser::*;
+    /// # use libparser::parse_context::ParseContext;
+    /// # use libparser::ast::*;
+    /// static INPUT: &str = "return 3";
+    /// let context = ParseContext::new(INPUT);
+    /// let mut parser = Parser::new(INPUT, &context);
+    /// let statement = parser.parse_statement().unwrap();
+    /// match statement {
+    ///     Statement::Return(..) => {}
+    ///     _ => panic!()
+    /// }
+    /// ```
     pub fn parse_statement(&mut self) -> Option<Statement> {
         let next = self.lexer.peek(0);
         match next.kind {

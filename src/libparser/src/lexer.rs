@@ -72,6 +72,7 @@ pub enum TokenKind {
     Unknown,
 }
 
+/// See if text matches keyword
 fn keyword(text: &str) -> Option<TokenKind> {
     match text {
         "let" => Some(TokenKind::Let),
@@ -117,6 +118,7 @@ fn is_whitespace(c: char) -> bool {
     }
 }
 
+/// Is the first char of identifier
 fn is_ident_first(c: char) -> bool {
     match c {
         'A'..='Z' | 'a'..='z' | '_' => true,
@@ -124,6 +126,7 @@ fn is_ident_first(c: char) -> bool {
     }
 }
 
+/// Is an identifier char
 fn is_ident(c: char) -> bool {
     match c {
         'A'..='Z' | 'a'..='z' | '_' | '0'..='9' => true,
@@ -395,6 +398,7 @@ fn eof() -> Token {
     }
 }
 
+/// Lexer has a tokenizer and a parse context for error handling
 pub struct Lexer<'a> {
     tokens: Tokenizer<'a>,
     pub context: &'a ParseContext<'a>,
@@ -408,15 +412,46 @@ impl<'a> Lexer<'a> {
         }
     }
 
+    /// Get next token and consume it
+    /// # Examples
+    /// ```
+    /// # use libparser::lexer::*;
+    /// let context = Default::default();
+    /// let mut lexer = Lexer::new("234 + ident", &context);
+    /// assert_eq!(lexer.next().kind, TokenKind::Literal(LiteralKind::Int));
+    /// assert_eq!(lexer.next().kind, TokenKind::Plus);
+    /// assert_eq!(lexer.next().kind, TokenKind::Identifier);
+    /// ```
     #[allow(clippy::should_implement_trait)]
     pub fn next(&mut self) -> Token {
         self.tokens.next().unwrap_or_else(eof)
     }
 
+
+    /// Peek `n` tokens ahead
+    /// # Examples
+    /// ```
+    /// # use libparser::lexer::*;
+    /// let context = Default::default();
+    /// let mut lexer = Lexer::new("234 + ident", &context);
+    /// assert_eq!(lexer.peek(0).kind, TokenKind::Literal(LiteralKind::Int));
+    /// assert_eq!(lexer.peek(1).kind, TokenKind::Plus);
+    /// assert_eq!(lexer.peek(2).kind, TokenKind::Identifier);
+    /// ```
     pub fn peek(&self, n: usize) -> Token {
         self.tokens.clone().nth(n).unwrap_or_else(eof)
     }
 
+    /// If next token is listed in `kind` return `Some(token)`, otherwise return
+    /// `None` and don't consume.
+    /// # Examples
+    /// ```
+    /// # use libparser::lexer::*;
+    /// let context = Default::default();
+    /// let mut lexer = Lexer::new("234 + ident", &context);
+    /// assert_ne!(lexer.until(vec![TokenKind::Literal(LiteralKind::Int)]), None);
+    /// assert_eq!(lexer.until(vec![TokenKind::Literal(LiteralKind::Int)]), None); 
+    /// ```
     pub fn until(&mut self, kind: Vec<TokenKind>) -> Option<Token> {
         let peeked = self.peek(0);
         for k in kind.iter() {
@@ -427,6 +462,14 @@ impl<'a> Lexer<'a> {
         None
     }
 
+    /// Expect the next token to be of kind `kind` otherwise return `None` and
+    /// output an error to the parse context.
+    /// ```
+    /// # use libparser::lexer::*;
+    /// let context = Default::default();
+    /// let mut lexer = Lexer::new("234 + ident", &context);
+    /// assert_ne!(lexer.expect(TokenKind::Literal(LiteralKind::Int), "test"), None);
+    /// ```
     pub fn expect(&mut self, kind: TokenKind, message: &str) -> Option<Token> {
         let peeked = self.peek(0);
         if peeked.kind == kind {

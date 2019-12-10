@@ -1,3 +1,4 @@
+/// Span represents a chunk of code with its starting index and ending index.
 #[derive(Clone, Copy, PartialEq)]
 pub struct Span {
     pub pos: (usize, usize),
@@ -11,12 +12,16 @@ impl std::fmt::Debug for Span {
         } else {
             write!(f, "{:?}", self.pos)
         }
-        // let s = include_str!("../../test.an");
-        // write!(f, "{}", &s[self.pos.0..self.pos.1])
     }
 }
 
 impl Span {
+    /// Create a new span with pos `(start, end)`
+    /// ```
+    /// # use libparser::span::Span;
+    /// let span = Span::new(0, 5);
+    /// assert_eq!(span.pos, (0, 5));
+    /// ```
     pub fn new(start: usize, end: usize) -> Span {
         Span {
             pos: (start, end),
@@ -24,6 +29,12 @@ impl Span {
         }
     }
 
+    /// Create a new dummy span with pos `(0, 0)`
+    /// ```
+    /// # use libparser::span::Span;
+    /// let span = Span::dummy();
+    /// assert!(span.is_dummy);
+    /// ```
     pub fn dummy() -> Span {
         Span {
             pos: (0, 0),

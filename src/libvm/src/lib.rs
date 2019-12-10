@@ -1,3 +1,5 @@
+extern crate byteorder;
+
 pub mod consts;
 pub mod function;
 pub mod module;

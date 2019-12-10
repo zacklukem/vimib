@@ -3,6 +3,21 @@ use crate::ast::*;
 use crate::lexer::TokenKind;
 
 impl Parser<'_> {
+
+    /// Parse an expression
+    /// ```
+    /// # use libparser::ast::{Expression, Op};
+    /// # use libparser::parse_context::ParseContext;
+    /// # use libparser::parser::Parser;
+    /// static INPUT: &str = "5 + 3 * (3 + 2)";
+    /// let ctx: ParseContext = ParseContext::new(INPUT);
+    /// let mut parser = Parser::new(INPUT, &ctx);
+    /// let expr = parser.parse_expression();
+    /// match expr {
+    ///     Expression::Binary(_, op, _, _) => assert_eq!(op, Op::Plus),
+    ///     _ => assert!(false),
+    /// }
+    /// ```
     pub fn parse_expression(&mut self) -> Expression {
         self.equality()
     }
@@ -135,27 +150,6 @@ impl Parser<'_> {
             self.context
                 .error(paren.span, "Missing parentheses in function call");
             Expression::Dummy
-        }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn test_parse_expression() {
-        // FIXME: Make this test more comprehensive
-        use crate::ast::{Expression, Op};
-        use crate::parse_context::ParseContext;
-        use crate::parser::Parser;
-
-        static INPUT: &str = "5 + 3 * (3 + 2)";
-        let ctx: ParseContext = ParseContext::new(INPUT);
-
-        let mut parser = Parser::new(INPUT, &ctx);
-        let expr = parser.parse_expression();
-        match expr {
-            Expression::Binary(_, op, _, _) => assert_eq!(op, Op::Plus),
-            _ => assert!(false),
         }
     }
 }

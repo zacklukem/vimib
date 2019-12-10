@@ -61,6 +61,7 @@ pub const RET_I: u8 = 0xff;
 /// # use libvm::consts::*;
 /// assert_eq!(disassemble_each(IF_NE), Some("if_ne"));
 /// assert_eq!(disassemble_each(0x02), None);
+/// ```
 pub fn disassemble_each(val: u8) -> Option<&'static str> {
     match val {
         NOP => Some("nop"),

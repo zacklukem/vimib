@@ -1,6 +1,7 @@
 use crate::lexer::{self, TokenKind};
 use crate::span::Span;
 
+/// Type of a literal is unsized
 #[derive(Debug, Clone)]
 pub enum LiteralKind {
     String,
@@ -66,6 +67,7 @@ pub enum Expression {
     Dummy,
 }
 
+/// Parser type (not literal kind)
 #[derive(Debug, Clone)]
 pub enum Type {
     Str,
@@ -74,6 +76,7 @@ pub enum Type {
     Void,
 }
 
+/// Identifier (for parameters and assignment)
 #[derive(Debug, Clone)]
 pub enum Ident {
     Typed(Span, Type),
